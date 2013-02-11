@@ -1,25 +1,11 @@
-#include <stdint.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <sys/uio.h>
 
-typedef struct
-{
-	size_t size;
-	size_t head;
-	size_t tail;
-} ring_header_t;
+#include "ring.h"
 
-typedef int32_t ring_size_t; // Negative numbers are needed for skips
-
-typedef struct
-{
-	ring_header_t * header;
-	char * buf;
-} ringbuffer_t;
 
 /// Round up X to closest 2^n
 static ring_size_t size_aligned(ring_size_t x)
@@ -35,11 +21,14 @@ int ring_init(ringbuffer_t *ring, size_t size, void * memory)
 {
 	if (!memory) {
 		ring->header = malloc(sizeof(ring_header_t) + size);
+		if (ring->header == NULL)
+		    return ENOMEM;
 		ring->header->size = size;
 		ring->header->head = ring->header->tail = 0;
 	} else
 		ring->header = memory;
 	ring->buf = (char *) (ring->header + 1);
+	return 0;
 }
 
 inline ring_size_t * _size_at(ringbuffer_t *ring, size_t off)
@@ -112,9 +101,10 @@ void ring_dump(ringbuffer_t *ring, const char *name)
 		return;
 	}
 	printf("Data in %s: %d %.*s\n", name,
-		ring_next_size(ring), ring_next_size(ring), ring_next(ring));
+	       ring_next_size(ring), ring_next_size(ring), (char *) ring_next(ring));
 }
 
+#if 0
 int main()
 {
 	ringbuffer_t ring1, ring2;
@@ -123,12 +113,35 @@ int main()
 	ring_init(rw, 0, ro->header);
 
 	ring_dump(ro, "ro"); ring_dump(rw, "rw");
+
 	ring_write(rw, "test", 4);
 	ring_dump(ro, "ro"); ring_dump(rw, "rw");
+
 	ring_write(rw, "test", 0);
 	ring_dump(ro, "ro"); ring_dump(rw, "rw");
+
 	ring_shift(ro);
 	ring_dump(ro, "ro"); ring_dump(rw, "rw");
+
 	ring_shift(ro);
 	ring_dump(ro, "ro"); ring_dump(rw, "rw");
 }
+
+
+
+Ring ro is empty
+Ring rw is empty
+
+Data in ro: 4 test
+Data in rw: 4 test
+
+Data in ro: 4 test
+Data in rw: 4 test
+
+Data in ro: 0 
+Data in rw: 0 
+
+Ring ro is empty
+Ring rw is empty
+
+#endif
