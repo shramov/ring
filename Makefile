@@ -9,3 +9,8 @@ ringtest:  test.o ring.o
 
 ring.o:	ring.c ring.h
 
+
+
+clean:
+	rm -f test.o ring.o
+

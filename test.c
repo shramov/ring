@@ -2,7 +2,6 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
-//#include <sys/uio.h>
 
 #include "ring.h"
 
@@ -28,6 +27,8 @@ int main()
 
 	ring_shift(ro);
 	ring_dump(ro, "ro"); ring_dump(rw, "rw");
+
+	exit(0);
 }
 
 
