@@ -22,6 +22,7 @@ typedef struct
 
 int ring_init(ringbuffer_t *ring, size_t size, void * memory);
 int ring_write(ringbuffer_t *ring, void * data, size_t size);
+void * ring_next(ringbuffer_t *ring);
 ring_size_t ring_next_size(ringbuffer_t *ring);
 struct iovec ring_next_iovec(ringbuffer_t *ring);
 void ring_shift(ringbuffer_t *ring);
