@@ -23,18 +23,11 @@
 #include "ring.h"
 
 
-/// Round up X to closest 2^n
+/// Round up X to closest upper alignment boundary
 static ring_size_t size_aligned(ring_size_t x)
 {
-    // TODO: Replace with unconditional one
-
-    // mah: what is a 'unconditional one'?
-    // mah: the alignment is dubious (any portable way to do this?)
-    
-    static const int align = 0x11;
-    if (x & align)
-	return x + align + 1 - (x & align);
-    return x;
+    static const int align = 8;
+    return x + (-x & (align - 1));
 }
 
 int ring_init(ringbuffer_t *ring, size_t size, void * memory)
@@ -51,52 +44,65 @@ int ring_init(ringbuffer_t *ring, size_t size, void * memory)
     return 0;
 }
 
-inline ring_size_t * _size_at(ringbuffer_t *ring, size_t off)
+static inline ring_size_t * _size_at(ringbuffer_t *ring, size_t off)
 {
     return (ring_size_t *) (ring->buf + off);
 }
 
-int ring_write(ringbuffer_t *ring, void * data, size_t size)
+int ring_write(ringbuffer_t *ring, void * data, size_t sz)
 {
-    size_t a = size_aligned(size + sizeof(ring_size_t));
-    if (a > ring->header->size)
+    ring_header_t *h = ring->header;
+    size_t a = size_aligned(sz + sizeof(ring_size_t));
+    if (a > h->size)
 	return ERANGE;
-    if ((ring->header->tail + a) % ring->header->size == ring->header->head)
-	return EAGAIN;
-    if (ring->header->tail + size > ring->header->size) {
-	if (ring->header->head < a)
+
+    int free = (h->head - h->tail - 1) % h->size + 1; // -1 + 1 is needed for head==tail
+
+    //printf("Free space: %d; Need %zd\n", free, a);
+    if (free <= a) return EAGAIN;
+    if (h->tail + a > h->size) {
+	if (h->head <= a)
 	    return EAGAIN;
 	// Wrap
-	*_size_at(ring, ring->header->tail) = -1;
+	*_size_at(ring, h->tail) = -1;
 	// mah: see [2]:144
 	// PaUtil_WriteMemoryBarrier(); ???
-	ring->header->tail = 0;
+	h->tail = 0;
     }
-    *_size_at(ring, ring->header->tail) = size;
-    memmove(ring->buf + ring->header->tail + sizeof(ring_size_t), data, size);
+    *_size_at(ring, h->tail) = sz;
+    memmove(ring->buf + h->tail + sizeof(ring_size_t), data, sz);
     // mah: see [2]:144
     // PaUtil_WriteMemoryBarrier(); ???
 
     // mah: see [6]:69
-    // should this be CAS(&(ring->header->tail, ring->header->tail, ring->header->tail+a) ?
-    ring->header->tail += a;
+    // should this be CAS(&(h->tail, h->tail, h->tail+a) ?
+    h->tail = (h->tail + a) % h->size;
+    //printf("New head/tail: %zd/%zd\n", h->head, h->tail);
     return 0;
 }
 
 void * ring_next(ringbuffer_t *ring)
 {
-    if (ring->header->head == ring->header->tail)
+    ring_header_t *h = ring->header;
+    if (h->head == h->tail)
 	return 0;
     // mah: see [2]:181
     // PaUtil_ReadMemoryBarrier(); ???
-    return ring->buf + ring->header->head + sizeof(ring_size_t);
+    return ring->buf + h->head + sizeof(ring_size_t);
 }
 
 ring_size_t ring_next_size(ringbuffer_t *ring)
 {
-    if (ring->header->head == ring->header->tail)
+    ring_header_t *h = ring->header;
+    if (h->head == h->tail)
 	return -1;
-    return *_size_at(ring, ring->header->head);
+
+    //printf("Head/tail: %zd/%zd\n", h->head, h->tail);
+    ring_size_t sz = *_size_at(ring, h->head);
+    if (sz >= 0) return sz;
+
+    h->head = 0;
+    return ring_next_size(ring);
 }
 
 struct iovec ring_next_iovec(ringbuffer_t *ring)
@@ -112,17 +118,18 @@ struct iovec ring_next_iovec(ringbuffer_t *ring)
 
 void ring_shift(ringbuffer_t *ring)
 {
-    if (ring->header->head == ring->header->tail)
+    ring_header_t *h = ring->header;
+    if (h->head == h->tail)
 	return;
     // mah: [2]:192 
     // PaUtil_FullMemoryBarrier(); ???
-    ring_size_t size = *_size_at(ring, ring->header->head);
+    ring_size_t size = *_size_at(ring, h->head);
     if (size < 0) {
-	ring->header->head = 0;
+	h->head = 0;
 	return;
     }
     size = size_aligned(size + sizeof(ring_size_t));
-    ring->header->head = (ring->header->head + size) % ring->header->size;
+    h->head = (h->head + size) % h->size;
 }
 
 void ring_dump(ringbuffer_t *ring, const char *name)
