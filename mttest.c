@@ -80,6 +80,7 @@ int main(int argc, char **argv)
     e_size = strtoul(argv[3],NULL,0);
 
     assert(rb_size >= 16);
+    assert(e_size <= sizeof(elem_t));
 
     assert(ring_init(rb, rb_size, 0) == 0);
     start = clock();
