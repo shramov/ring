@@ -2,7 +2,6 @@ package main
 
 import "fmt"
 import "math/rand"
-import "hash/crc32"
 import "time"
 import "ring"
 
