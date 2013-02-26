@@ -2,6 +2,9 @@
 #include <stddef.h>
 #include <sys/uio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct
 {
@@ -26,5 +29,10 @@ void * ring_next(ringbuffer_t *ring);
 ring_size_t ring_next_size(ringbuffer_t *ring);
 struct iovec ring_next_iovec(ringbuffer_t *ring);
 void ring_shift(ringbuffer_t *ring);
+size_t ring_available(const ringbuffer_t *ring);
 
 void ring_dump(ringbuffer_t *ring, const char *name);
+
+#ifdef __cplusplus
+}; //extern "C"
+#endif

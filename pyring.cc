@@ -14,6 +14,7 @@ public:
 
 	int write(char *buf, size_t size) { return ring_write(this, buf, size); }
 	void shift() { return ring_shift(this); }
+	size_t available() const { return ring_available(this); }
 
 	py::object next_buffer()
 	{
@@ -33,6 +34,7 @@ BOOST_PYTHON_MODULE(ring) {
 	class_<Ring>("Ring", init<size_t>())
 		.def("next", &Ring::next_buffer)
 		.def("next_size", &Ring::next_size)
+		.def("available", &Ring::available)
 		.def("shift", &Ring::shift)
 		.def("write", &Ring::write);
 }

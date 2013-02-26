@@ -22,11 +22,12 @@
 
 #include "ring.h"
 
+#define MAX(x, y) (((x) > (y))?(x):(y))
 
 /// Round up X to closest upper alignment boundary
+static const int align = 8;
 static ring_size_t size_aligned(ring_size_t x)
 {
-    static const int align = 8;
     return x + (-x & (align - 1));
 }
 
@@ -130,6 +131,18 @@ void ring_shift(ringbuffer_t *ring)
     }
     size = size_aligned(size + sizeof(ring_size_t));
     h->head = (h->head + size) % h->size;
+}
+
+size_t ring_available(const ringbuffer_t *ring)
+{
+    const ring_header_t *h = ring->header;
+    int avail = 0;
+    printf("Head/tail: %d/%d\n", h->head, h->tail);
+    if (h->tail < h->head)
+        avail = h->head - h->tail;
+    else
+        avail = MAX(h->head, h->size - h->tail);
+    return MAX(0, avail - 2 * align);
 }
 
 void ring_dump(ringbuffer_t *ring, const char *name)
