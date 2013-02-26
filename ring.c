@@ -57,7 +57,7 @@ int ring_write(ringbuffer_t *ring, void * data, size_t sz)
     if (a > h->size)
 	return ERANGE;
 
-    int free = (h->head - h->tail - 1) % h->size + 1; // -1 + 1 is needed for head==tail
+    int free = (h->size + h->head - h->tail - 1) % h->size + 1; // -1 + 1 is needed for head==tail
 
     //printf("Free space: %d; Need %zd\n", free, a);
     if (free <= a) return EAGAIN;
