@@ -52,7 +52,7 @@ static inline ring_size_t * _size_at(const ringbuffer_t *ring, size_t off)
     return (ring_size_t *) (ring->buf + off);
 }
 
-int ring_write(ringbuffer_t *ring, void * data, size_t sz)
+int ring_write_begin(ringbuffer_t *ring, void ** data, size_t sz)
 {
     ring_header_t *h = ring->header;
     size_t a = size_aligned(sz + sizeof(ring_size_t));
@@ -66,14 +66,23 @@ int ring_write(ringbuffer_t *ring, void * data, size_t sz)
     if (h->tail + a > h->size) {
 	if (h->head <= a)
 	    return EAGAIN;
+	*data = _size_at(ring, 0) + 1;
+	return 0;
+    }
+    *data = _size_at(ring, h->tail) + 1;
+    return 0;
+}
+
+int ring_write_end(ringbuffer_t *ring, void * data, size_t sz)
+{
+    ring_header_t *h = ring->header;
+    size_t a = size_aligned(sz + sizeof(ring_size_t));
+    if (data == _size_at(ring, 0) + 1) {
 	// Wrap
 	*_size_at(ring, h->tail) = -1;
-	// mah: see [2]:144
-	// PaUtil_WriteMemoryBarrier(); ???
 	h->tail = 0;
     }
     *_size_at(ring, h->tail) = sz;
-    memmove(ring->buf + h->tail + sizeof(ring_size_t), data, sz);
     // mah: see [2]:144
     // PaUtil_WriteMemoryBarrier(); ???
 
@@ -82,6 +91,15 @@ int ring_write(ringbuffer_t *ring, void * data, size_t sz)
     h->tail = (h->tail + a) % h->size;
     //printf("New head/tail: %zd/%zd\n", h->head, h->tail);
     return 0;
+}
+
+int ring_write(ringbuffer_t *ring, const void * data, size_t sz)
+{
+    void * ptr;
+    int r = ring_write_begin(ring, &ptr, sz);
+    if (r) return r;
+    memmove(ptr, data, sz);
+    return ring_write_end(ring, ptr, sz);
 }
 
 static inline int _ring_read_at(const ringbuffer_t *ring, size_t offset, const void **data, size_t *size)
