@@ -12,7 +12,7 @@
 typedef struct {
     int serial;
     int realsize;
-    char fluff[1000];
+    char fluff[10000];
 } elem_t;
 
 static size_t rb_size = 16384;
