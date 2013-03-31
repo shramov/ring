@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <sys/uio.h>
 
+#include <sys/mman.h>
+
 #include "ring.h"
 
 #define MAX(x, y) (((x) > (y))?(x):(y))
@@ -45,7 +47,7 @@ int ring_init(ringbuffer_t *ring, size_t size, void * memory)
     return 0;
 }
 
-static inline ring_size_t * _size_at(ringbuffer_t *ring, size_t off)
+static inline ring_size_t * _size_at(const ringbuffer_t *ring, size_t off)
 {
     return (ring_size_t *) (ring->buf + off);
 }
@@ -82,62 +84,70 @@ int ring_write(ringbuffer_t *ring, void * data, size_t sz)
     return 0;
 }
 
-void * ring_next(ringbuffer_t *ring)
+static inline int _ring_read_at(const ringbuffer_t *ring, size_t offset, const void **data, size_t *size)
 {
     ring_header_t *h = ring->header;
-    if (h->head == h->tail)
-	return 0;
-    // mah: see [2]:181
-    // PaUtil_ReadMemoryBarrier(); ???
-    return ring->buf + h->head + sizeof(ring_size_t);
+    if (offset == h->tail)
+	return EAGAIN;
+
+    //printf("Head/tail: %zd/%zd\n", h->head, h->tail);
+    ring_size_t *sz = _size_at(ring, offset);
+    if (*sz < 0)
+        return _ring_read_at(ring, 0, data, size);
+
+    *size = *sz;
+    *data = sz + 1;
+    return 0;
+}
+
+const void * ring_next(ringbuffer_t *ring)
+{
+    const void *data;
+    size_t size;
+    if (ring_read(ring, &data, &size)) return 0;
+    return data;
 }
 
 ring_size_t ring_next_size(ringbuffer_t *ring)
 {
+    const void *data;
+    size_t size;
+    if (ring_read(ring, &data, &size)) return -1;
+    return size;
+}
+
+int ring_read(const ringbuffer_t *ring, const void **data, size_t *size)
+{
+    return _ring_read_at(ring, ring->header->head, data, size);
+}
+
+static ssize_t _ring_shift_offset(const ringbuffer_t *ring, size_t offset)
+{
     ring_header_t *h = ring->header;
     if (h->head == h->tail)
 	return -1;
-
-    //printf("Head/tail: %zd/%zd\n", h->head, h->tail);
-    ring_size_t sz = *_size_at(ring, h->head);
-    if (sz >= 0) return sz;
-
-    h->head = 0;
-    return ring_next_size(ring);
-}
-
-struct iovec ring_next_iovec(ringbuffer_t *ring)
-{
-    ring_size_t size = ring_next_size(ring);
-    if (size < 0) {
-	static const struct iovec iov = { .iov_len = 0 };
-	return iov;
-    }
-    struct iovec iov = { .iov_len = size, .iov_base = ring_next(ring) };
-    return iov;
+    // mah: [2]:192 
+    // PaUtil_FullMemoryBarrier(); ???
+    ring_size_t size = *_size_at(ring, offset);
+    if (size < 0)
+	return _ring_shift_offset(ring, 0);
+    size = size_aligned(size + sizeof(ring_size_t));
+    return (offset + size) % h->size;
 }
 
 void ring_shift(ringbuffer_t *ring)
 {
-    ring_header_t *h = ring->header;
-    if (h->head == h->tail)
-	return;
-    // mah: [2]:192 
-    // PaUtil_FullMemoryBarrier(); ???
-    ring_size_t size = *_size_at(ring, h->head);
-    if (size < 0) {
-	h->head = 0;
-	return;
-    }
-    size = size_aligned(size + sizeof(ring_size_t));
-    h->head = (h->head + size) % h->size;
+    ssize_t off = _ring_shift_offset(ring, ring->header->head);
+    if (off < 0) return;
+    ring->header->generation++;
+    ring->header->head = off;
 }
 
 size_t ring_available(const ringbuffer_t *ring)
 {
     const ring_header_t *h = ring->header;
     int avail = 0;
-    printf("Head/tail: %d/%d\n", h->head, h->tail);
+//    printf("Head/tail: %zd/%zd\n", h->head, h->tail);
     if (h->tail < h->head)
         avail = h->head - h->tail;
     else
@@ -153,6 +163,41 @@ void ring_dump(ringbuffer_t *ring, const char *name)
     }
     printf("Data in %s: %d %.*s\n", name,
 	   ring_next_size(ring), ring_next_size(ring), (char *) ring_next(ring));
+}
+
+int ring_iter_init(const ringbuffer_t *ring, ringiter_t *iter)
+{
+    iter->ring = ring;
+    iter->generation = ring->header->generation;
+    iter->offset = ring->header->head;
+    if (ring->header->generation != iter->generation)
+        return EAGAIN;
+    return 0;
+}
+
+int ring_iter_invalid(const ringiter_t *iter)
+{
+    if (iter->ring->header->generation > iter->generation)
+        return EINVAL;
+    return 0;
+}
+
+int ring_iter_shift(ringiter_t *iter)
+{
+    if (ring_iter_invalid(iter)) return EINVAL;
+    ssize_t off = _ring_shift_offset(iter->ring, iter->offset);
+    if (off < 0) return EAGAIN;
+//    printf("Offset to %zd\n", off);
+    iter->offset = off;
+    return 0;
+}
+
+int ring_iter_read(const ringiter_t *iter, const void **data, size_t *size)
+{
+    if (ring_iter_invalid(iter)) return EINVAL;
+
+//    printf("Read at %zd\n", iter->offset);
+    return _ring_read_at(iter->ring, iter->offset, data, size);
 }
 
 #if 0
@@ -196,3 +241,5 @@ Ring ro is empty
 Ring rw is empty
 
 #endif
+
+// vim: sts=4 sw=4 noet
