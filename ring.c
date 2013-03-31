@@ -90,6 +90,9 @@ static inline int _ring_read_at(const ringbuffer_t *ring, size_t offset, const v
     if (offset == h->tail)
 	return EAGAIN;
 
+    // mah: see [2]:181
+    // PaUtil_ReadMemoryBarrier(); ???
+
     //printf("Head/tail: %zd/%zd\n", h->head, h->tail);
     ring_size_t *sz = _size_at(ring, offset);
     if (*sz < 0)
