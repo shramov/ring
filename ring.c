@@ -209,6 +209,7 @@ int ring_iter_shift(ringiter_t *iter)
     ssize_t off = _ring_shift_offset(iter->ring, iter->offset);
     if (off < 0) return EAGAIN;
 //    printf("Offset to %zd\n", off);
+    iter->generation++;
     iter->offset = off;
     return 0;
 }
