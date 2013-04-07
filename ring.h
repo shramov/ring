@@ -42,12 +42,12 @@ typedef struct
 int ring_init(ringbuffer_t *ring, size_t size, void * memory);
 int ring_init_file(ringbuffer_t *ring, size_t size, int fd);
 
-int ring_write_start(ringbuffer_t *ring, void ** data, size_t size);
+int ring_write_begin(ringbuffer_t *ring, void ** data, size_t size);
 int ring_write_end(ringbuffer_t *ring, void * data, size_t size);
 int ring_write(ringbuffer_t *ring, const void * data, size_t size);
 
 int ring_read(const ringbuffer_t *ring, const void **data, size_t *size);
-void ring_shift(ringbuffer_t *ring);
+int ring_shift(ringbuffer_t *ring);
 
 size_t ring_available(const ringbuffer_t *ring);
 

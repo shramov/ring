@@ -13,7 +13,7 @@ public:
 	const void* next() { return ring_next(this); }
 
 	int write(char *buf, size_t size) { return ring_write(this, buf, size); }
-	void shift() { return ring_shift(this); }
+	int shift() { return ring_shift(this); }
 	size_t available() const { return ring_available(this); }
 
 	py::object read_buffer() const

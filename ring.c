@@ -41,6 +41,7 @@ int ring_init(ringbuffer_t *ring, size_t size, void * memory)
 	    return ENOMEM;
 	ring->header->size = size;
 	ring->header->head = ring->header->tail = 0;
+	ring->header->generation = 0;
     } else
 	ring->header = memory;
     ring->buf = (char *) (ring->header + 1);
@@ -156,12 +157,13 @@ static ssize_t _ring_shift_offset(const ringbuffer_t *ring, size_t offset)
     return (offset + size) % h->size;
 }
 
-void ring_shift(ringbuffer_t *ring)
+int ring_shift(ringbuffer_t *ring)
 {
     ssize_t off = _ring_shift_offset(ring, ring->header->head);
-    if (off < 0) return;
+    if (off < 0) return EAGAIN;
     ring->header->generation++;
     ring->header->head = off;
+    return 0;
 }
 
 size_t ring_available(const ringbuffer_t *ring)
