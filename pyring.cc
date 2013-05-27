@@ -32,14 +32,22 @@ class RingIter : public ringiter_t {
 	const Ring &_ring;
 public:
 	RingIter(const Ring &ring) : _ring(ring) { ring_iter_init(&ring, this); }
-	int shift() { return ring_iter_shift(this);}
+	int shift() {
+		int r = ring_iter_shift(this);
+		if (r == EINVAL)
+			throw std::out_of_range("Iteratos is out of date");
+		return r;
+	}
 	py::object read_buffer() const
 	{
 		const void *data;
 		size_t size;
 
-		if (ring_iter_read(this, &data, &size))
-			return py::object();
+		int r = ring_iter_read(this, &data, &size);
+		if (r) {
+			if (r == EAGAIN) return py::object();
+			throw std::out_of_range("Iteratos is out of date");
+		}
 		py::handle<> h(PyBuffer_FromMemory ((void *) data, size));
 		return py::object(h);
 	}
