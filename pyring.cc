@@ -4,6 +4,10 @@
 
 namespace py = boost::python;
 
+inline py::object pass_through(py::object const& o) { return o; }
+
+class RingIter;
+
 class Ring : public ringbuffer_t {
 public:
 	Ring(size_t size) { ring_init(this, size, 0); }
@@ -26,6 +30,8 @@ public:
 		py::handle<> h(PyBuffer_FromMemory ((void *) data, size));
 		return py::object(h);
 	}
+
+	RingIter __iter__() const;
 };
 
 class RingIter : public ringiter_t {
@@ -51,7 +57,20 @@ public:
 		py::handle<> h(PyBuffer_FromMemory ((void *) data, size));
 		return py::object(h);
 	}
+
+	py::object next()
+	{
+		py::object buf = read_buffer();
+		if (buf.ptr() == py::object().ptr()) {
+			PyErr_SetString(PyExc_StopIteration, "No more data.");
+			boost::python::throw_error_already_set();
+		}
+		shift();
+		return buf;
+	}
 };
+
+inline RingIter Ring::__iter__() const { return RingIter(*this); }
 
 BOOST_PYTHON_MODULE(ring) {
 	using namespace boost::python;
@@ -64,8 +83,11 @@ BOOST_PYTHON_MODULE(ring) {
 		.def("read", &Ring::read_buffer)
 		.def("available", &Ring::available)
 		.def("shift", &Ring::shift)
-		.def("write", &Ring::write);
+		.def("write", &Ring::write)
+		.def("__iter__", &Ring::__iter__);
 	class_<RingIter>("RingIter", init<const Ring &>())
 		.def("shift", &RingIter::shift)
-		.def("read", &RingIter::read_buffer);
+		.def("read", &RingIter::read_buffer)
+		.def("__iter__", &pass_through)
+		.def("next", &RingIter::next);
 }
