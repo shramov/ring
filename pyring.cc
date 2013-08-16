@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2013 Pavel Shramov <shramov@mexmat.net>
+ *
+ * ring is free software; you can redistribute it and/or modify
+ * it under the terms of the MIT license. See LICENSE for details.
+ */
+
 #include <boost/python.hpp>
 
 #include "ring.h"

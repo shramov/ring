@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2013 Pavel Shramov <shramov@mexmat.net>
+ *
+ * ring is free software; you can redistribute it and/or modify
+ * it under the terms of the MIT license. See LICENSE for details.
+ */
+
+#ifndef __LL_RING_H__
+#define __LL_RING_H__
+
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/uio.h>
@@ -68,3 +78,5 @@ void ring_dump(ringbuffer_t *ring, const char *name);
 #ifdef __cplusplus
 }; //extern "C"
 #endif
+
+#endif//__LL_RING_H__

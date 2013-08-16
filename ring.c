@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2013 Pavel Shramov <shramov@mexmat.net>
+ *
+ * ring is free software; you can redistribute it and/or modify
+ * it under the terms of the MIT license. See LICENSE for details.
+ */
+
 // mah: requirements:
 // this _must_ run on i386, x86_64, arm UP and SMP
 // it seems [3] does all we need
