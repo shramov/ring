@@ -55,6 +55,12 @@ int ring_init(ringbuffer_t *ring, size_t size, void * memory)
     return 0;
 }
 
+void ring_free(ringbuffer_t *ring)
+{
+	if (!ring) return;
+	free(ring->header);
+}
+
 static inline ring_size_t * _size_at(const ringbuffer_t *ring, size_t off)
 {
     return (ring_size_t *) (ring->buf + off);
