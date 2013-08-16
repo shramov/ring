@@ -10,7 +10,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <sys/uio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,9 +65,6 @@ size_t ring_available(const ringbuffer_t *ring);
 // Wrappers, not needed
 const void * ring_next(ringbuffer_t *ring);
 ring_size_t ring_next_size(ringbuffer_t *ring);
-
-// Bad design :(
-struct iovec ring_next_iovec(ringbuffer_t *ring);
 
 int ring_iter_init(const ringbuffer_t *ring, ringiter_t *iter);
 int ring_iter_shift(ringiter_t *iter);

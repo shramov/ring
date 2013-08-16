@@ -25,9 +25,6 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
-#include <sys/uio.h>
-
-#include <sys/mman.h>
 
 #include "ring.h"
 
