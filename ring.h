@@ -35,7 +35,7 @@ static const int32_t ring_magic = _S('r', 3) | _S('i', 2) | _S('n', 1) | 'g';
 
 typedef int32_t ring_size_t; // Negative numbers are needed for skips
 
-typedef struct
+typedef struct ringbuffer_t
 {
     ring_header_t * header;
     char * buf;
