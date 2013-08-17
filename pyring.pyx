@@ -25,14 +25,14 @@ cdef class Ring:
             if r != EAGAIN:
                 raise RuntimeError("Ring write failed")
             return False
-        memcpy(<char *>ptr, PyString_AsString(s), size)
+        memcpy(ptr, PyString_AsString(s), size)
         ring_write_end(&self._ring, ptr, size)
         return True
 
     def read(self):
-        cdef char * ptr
+        cdef const void * ptr
         cdef size_t size
-        cdef int r = ring_read(&self._ring, <const void **>&ptr, &size)
+        cdef int r = ring_read(&self._ring, &ptr, &size)
         if r:
             if r != EAGAIN:
                 raise RuntimeError("Ring read failed")
@@ -53,9 +53,9 @@ cdef class RingIter:
             raise RuntimeError("Failed to initialize ring iter")
 
     def read(self):
-        cdef char * ptr
+        cdef const void * ptr
         cdef size_t size
-        cdef int r = ring_iter_read(&self._iter, <const void **>&ptr, &size)
+        cdef int r = ring_iter_read(&self._iter, &ptr, &size)
         if r:
             if r != EAGAIN:
                 raise RuntimeError("Ring read failed")
