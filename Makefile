@@ -11,7 +11,7 @@ python: libring.so ring.so
 ringtest:  test.o ring.o 
 	gcc -g test.o ring.o -o ringtest
 
-libring.so: ring.o
+libring.so: ring.o bufring.o
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
 ring.so: pyring.o
