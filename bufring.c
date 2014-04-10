@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <string.h>
 
+// what is the use case for this being public ?
 int bring_write_begin(bringbuffer_t *ring, void ** data, size_t size, int flags)
 {
 	const size_t sz = size + sizeof(bring_frame_t);
@@ -28,6 +29,7 @@ int bring_write_begin(bringbuffer_t *ring, void ** data, size_t size, int flags)
 	return 0;
 }
 
+// what is the use case for this being public ?
 int bring_write_end(bringbuffer_t *ring, void * data, size_t size)
 {
 	if (!ring->write)
@@ -38,6 +40,7 @@ int bring_write_end(bringbuffer_t *ring, void * data, size_t size)
 	return 0;
 }
 
+// add a frame
 int bring_write(bringbuffer_t *ring, const void * data, size_t sz, int flags)
 {
     void * ptr;
@@ -47,6 +50,7 @@ int bring_write(bringbuffer_t *ring, const void * data, size_t sz, int flags)
     return bring_write_end(ring, ptr, sz);
 }
 
+// finish and send off a multipart message, consisting of zero or more frames.
 int bring_write_flush(bringbuffer_t *ring)
 {
 	int r = ring_write_end(&ring->ring, ring->write, ring->write_off);
@@ -54,6 +58,7 @@ int bring_write_flush(bringbuffer_t *ring)
 	return r;
 }
 
+// read a frame without consuming.
 int bring_read(bringbuffer_t *ring, const void **data, size_t *size, int *flags)
 {
 	if (!ring->read) {
@@ -70,6 +75,7 @@ int bring_read(bringbuffer_t *ring, const void **data, size_t *size, int *flags)
 	return 0;
 }
 
+// consume a frame.
 int bring_shift(bringbuffer_t *ring)
 {
 	if (!ring->read || ring->read_off == ring->read_size) return EINVAL;
@@ -78,6 +84,7 @@ int bring_shift(bringbuffer_t *ring)
 	return 0;
 }
 
+// consume a multi-frame message, regardless how many frames were consumed.
 int bring_shift_flush(bringbuffer_t *ring)
 {
 	if (!ring->read) return EINVAL;
