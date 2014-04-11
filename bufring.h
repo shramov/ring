@@ -14,16 +14,22 @@ typedef struct {
 } bringbuffer_t;
 
 typedef struct {
+    const void *rv_base;
+    size_t rv_len;
+    int    rv_flags;
+} ringvec_t;
+
+typedef struct {
 	int32_t size;
 	int32_t flags;
 } bring_frame_t;
 
 int bring_write_begin(bringbuffer_t *ring, void ** data, size_t size, int flags);
 int bring_write_end(bringbuffer_t *ring, void * data, size_t size);
-int bring_write(bringbuffer_t *ring, const void * data, size_t size, int flags);
+int bring_write(bringbuffer_t *ring, ringvec_t *rv); // const void * data, size_t size, int flags);
 int bring_write_flush(bringbuffer_t *ring);
 
-int bring_read(bringbuffer_t *ring, const void **data, size_t *size, int *flags);
+int bring_read(bringbuffer_t *ring, ringvec_t *rv); // const void **data, size_t *size, int *flags);
 int bring_shift(bringbuffer_t *ring);
 int bring_shift_flush(bringbuffer_t *ring);
 

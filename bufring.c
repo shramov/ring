@@ -41,13 +41,13 @@ int bring_write_end(bringbuffer_t *ring, void * data, size_t size)
 }
 
 // add a frame
-int bring_write(bringbuffer_t *ring, const void * data, size_t sz, int flags)
+int bring_write(bringbuffer_t *ring, ringvec_t *rv)
 {
     void * ptr;
-    int r = bring_write_begin(ring, &ptr, sz, flags);
+    int r = bring_write_begin(ring, &ptr, rv->rv_len, rv->rv_flags);
     if (r) return r;
-    memmove(ptr, data, sz);
-    return bring_write_end(ring, ptr, sz);
+    memmove(ptr, rv->rv_base, rv->rv_len);
+    return bring_write_end(ring, ptr, rv->rv_len);
 }
 
 // finish and send off a multipart message, consisting of zero or more frames.
@@ -59,7 +59,7 @@ int bring_write_flush(bringbuffer_t *ring)
 }
 
 // read a frame without consuming.
-int bring_read(bringbuffer_t *ring, const void **data, size_t *size, int *flags)
+int bring_read(bringbuffer_t *ring, ringvec_t *rv)
 {
 	if (!ring->read) {
 		int r = ring_read(&ring->ring, &ring->read, &ring->read_size);
@@ -69,9 +69,9 @@ int bring_read(bringbuffer_t *ring, const void **data, size_t *size, int *flags)
 	if (ring->read_off == ring->read_size)
 		return EAGAIN; //XXX?
 	const bring_frame_t * frame = ring->read + ring->read_off;
-	*data = frame + 1;
-	*size = frame->size;
-	*flags = frame->flags;
+	rv->rv_base = frame + 1;
+	rv->rv_len = frame->size;
+	rv->rv_flags = frame->flags;
 	return 0;
 }
 
