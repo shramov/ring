@@ -38,7 +38,7 @@ void test_bufring(void)
 	    printf("Data[%d]: %zd '%.*s' %d\n", i, v->rv_len, (int) v->rv_len,
 		   (const char *) v->rv_base, v->rv_flags);
 	}
-	bring_shift_flush(ro);
+	bring_read_flush(ro);
 }
 
 int main(void)

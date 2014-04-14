@@ -58,6 +58,12 @@ int bring_write_flush(bringbuffer_t *ring)
 	return r;
 }
 
+int bring_write_abort(bringbuffer_t *ring)
+{
+	ring->write = 0;
+	return 0;
+}
+
 // read a frame without consuming.
 int bring_read(bringbuffer_t *ring, ringvec_t *rv)
 {
@@ -85,9 +91,16 @@ int bring_shift(bringbuffer_t *ring)
 }
 
 // consume a multi-frame message, regardless how many frames were consumed.
-int bring_shift_flush(bringbuffer_t *ring)
+int bring_read_flush(bringbuffer_t *ring)
 {
 	if (!ring->read) return EINVAL;
 	ring->read = 0;
 	return ring_shift(&ring->ring);
+}
+
+int bring_read_abort(bringbuffer_t *ring)
+{
+	if (!ring->read) return EINVAL;
+	ring->read = 0;
+	return 0;
 }
