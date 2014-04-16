@@ -1,5 +1,6 @@
 CPPFLAGS := $(shell python-config --cflags) -fPIC
 LDFLAGS := -L.
+PYTHON := python
 
 #CFLAGS=-O3 -g -Wall 
 CFLAGS=-O0 -g -Wall
@@ -16,6 +17,9 @@ libring.so: ring.o bufring.o
 
 ring.so: pyring.o
 	$(CC) $(LDFLAGS) -shared -o $@ $^ -lboost_python -lring
+
+pyring.so: pyring.pyx libring.pxd
+	LDFLAGS=$(LDFLAGS) $(PYTHON) setup.py build_ext --inplace
 
 pyring.o: ring.h
 
