@@ -24,14 +24,14 @@ void test_bufring(void)
 	ring_init(&rw->ring, 0, ro->ring.header);
 
 	for (i = 0; i < 3; i++) {
-	    bring_write(rw, &tx[i]);
+	    bring_writev(rw, &tx[i]);
 	}
 	bring_write_flush(rw);
 
 	int n;
 	ringvec_t rx[10] = { };
 
- 	for (n = 0; bring_read(ro, &rx[n]) == 0; n++, bring_shift(ro));
+	for (n = 0; bring_readv(ro, &rx[n]) == 0; n++, bring_shift(ro));
 
 	for (i = 0; i < n; i++) {
 	    ringvec_t *v = &rx[i];
