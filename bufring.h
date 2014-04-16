@@ -4,7 +4,7 @@
 #include "ring.h"
 
 typedef struct {
-	ringbuffer_t ring;
+	ringbuffer_t * ring;
 	void * write;
 	size_t write_size;
 	size_t write_off;

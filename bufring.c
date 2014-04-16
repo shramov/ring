@@ -8,7 +8,7 @@ int bring_write_begin(bringbuffer_t *ring, void ** data, size_t size, int flags)
 {
 	const size_t sz = size + sizeof(bring_frame_t);
 	if (!ring->write) {
-		int r = ring_write_begin(&ring->ring, &ring->write, sz);
+		int r = ring_write_begin(ring->ring, &ring->write, sz);
 		if (r) return r;
 		ring->write_size = sz;
 		ring->write_off = 0;
@@ -17,7 +17,7 @@ int bring_write_begin(bringbuffer_t *ring, void ** data, size_t size, int flags)
 	if (ring->write_size < ring->write_off + sizeof(bring_frame_t) + size) {
 		// Reallocate
 		const void * old = ring->write;
-		int r = ring_write_begin(&ring->ring, &ring->write, ring->write_off + sz);
+		int r = ring_write_begin(ring->ring, &ring->write, ring->write_off + sz);
 		if (r) return r;
 		if (old != ring->write)
 			memmove(ring->write, old, ring->write_off);
@@ -58,7 +58,7 @@ int bring_write(bringbuffer_t *ring, const void * data, size_t size, int flags)
 // finish and send off a multipart message, consisting of zero or more frames.
 int bring_write_flush(bringbuffer_t *ring)
 {
-	int r = ring_write_end(&ring->ring, ring->write, ring->write_off);
+	int r = ring_write_end(ring->ring, ring->write, ring->write_off);
 	ring->write = 0;
 	return r;
 }
@@ -78,7 +78,7 @@ int bring_readv(bringbuffer_t *ring, ringvec_t *rv)
 int bring_read(bringbuffer_t *ring, const void ** data, size_t * size, int * flags)
 {
 	if (!ring->read) {
-		int r = ring_read(&ring->ring, &ring->read, &ring->read_size);
+		int r = ring_read(ring->ring, &ring->read, &ring->read_size);
 		if (r) return r;
 		ring->read_off = 0;
 	}
@@ -105,7 +105,7 @@ int bring_read_flush(bringbuffer_t *ring)
 {
 	if (!ring->read) return EINVAL;
 	ring->read = 0;
-	return ring_shift(&ring->ring);
+	return ring_shift(ring->ring);
 }
 
 int bring_read_abort(bringbuffer_t *ring)

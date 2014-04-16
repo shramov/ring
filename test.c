@@ -10,8 +10,9 @@
 void test_bufring(void)
 {
         int i;
-	bringbuffer_t ring1 = { .write = 0, .read = 0 };
-	bringbuffer_t ring2 = { .write = 0, .read = 0 };
+	ringbuffer_t r1, r2;
+	bringbuffer_t ring1 = { .ring = &r1 };
+	bringbuffer_t ring2 = { .ring = &r2 };
 	bringbuffer_t *ro = &ring1, *rw = &ring2;
 
 	ringvec_t tx[3] = {
@@ -20,8 +21,8 @@ void test_bufring(void)
 	    { .rv_base = "part2", .rv_len = 5, .rv_flags = 3},
 	};
 
-	ring_init(&ro->ring, 1024, 0);
-	ring_init(&rw->ring, 0, ro->ring.header);
+	ring_init(ro->ring, 1024, 0);
+	ring_init(rw->ring, 0, ro->ring->header);
 
 	for (i = 0; i < 3; i++) {
 	    bring_writev(rw, &tx[i]);
