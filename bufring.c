@@ -34,7 +34,7 @@ int bring_write_end(bringbuffer_t *ring, void * data, size_t size)
 {
 	if (!ring->write)
 		return EINVAL;
-	bring_frame_t * frame = ring->write;
+	bring_frame_t * frame = ring->write + ring->write_off;
 	frame->size = size;
 	ring->write_off = ring->write_off + sizeof(*frame) + frame->size;
 	return 0;
