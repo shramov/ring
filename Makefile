@@ -24,6 +24,8 @@ pyring.so: pyring.pyx libring.pxd
 pyring.o: ring.h
 
 ring.o:	ring.c ring.h
+lqueue: lqueue.h
+lqueue: CXXFLAGS += -lpthread -std=c++11
 
 
 mttest:	 ring.o mttest.o
