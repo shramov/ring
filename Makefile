@@ -7,7 +7,7 @@ CFLAGS=-O0 -g -Wall
 
 all: ringtest mttest python
 
-python: libring.so ring.so
+python: libring.so pyring.so
 
 ringtest:  test.o ring.o bufring.o
 	gcc -g $^ -o ringtest
@@ -26,6 +26,9 @@ pyring.o: ring.h
 ring.o:	ring.c ring.h
 lqueue: lqueue.h
 lqueue: CXXFLAGS += -lpthread -std=c++11
+
+markerqueue: markerqueue.h
+markerqueue: CXXFLAGS += -lpthread -std=c++11
 
 
 mttest:	 ring.o mttest.o
