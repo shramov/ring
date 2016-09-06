@@ -11,6 +11,9 @@
 #include <memory>
 #include <atomic>
 
+/*
+ * XXX: Probably there are some races...
+ */
 template <typename T>
 class lqueue
 {
