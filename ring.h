@@ -51,6 +51,7 @@ typedef struct
 int ring_init(ringbuffer_t *ring, size_t size, void * memory);
 int ring_init_file(ringbuffer_t *ring, size_t size, int fd);
 void ring_free(ringbuffer_t *ring);
+void ring_clear(ringbuffer_t *ring);
 
 int ring_write_begin(ringbuffer_t *ring, void ** data, size_t size);
 int ring_write_end(ringbuffer_t *ring, void * data, size_t size);

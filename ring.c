@@ -58,6 +58,14 @@ void ring_free(ringbuffer_t *ring)
 	free(ring->header);
 }
 
+void ring_clear(ringbuffer_t *ring)
+{
+	if (!ring) return;
+	ring_header_t *h = ring->header;
+
+	h->head = h->tail = 0;
+}
+
 static inline ring_size_t * _size_at(const ringbuffer_t *ring, size_t off)
 {
     return (ring_size_t *) (ring->buf + off);
