@@ -68,6 +68,7 @@ const void * ring_next(ringbuffer_t *ring);
 ring_size_t ring_next_size(ringbuffer_t *ring);
 
 int ring_iter_init(const ringbuffer_t *ring, ringiter_t *iter);
+int ring_iter_invalid(const ringiter_t *iter);
 int ring_iter_shift(ringiter_t *iter);
 int ring_iter_read(const ringiter_t *iter, const void **data, size_t *size);
 
