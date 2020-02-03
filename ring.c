@@ -239,7 +239,10 @@ int ring_iter_read(const ringiter_t *iter, const void **data, size_t *size)
     if (ring_iter_invalid(iter)) return EINVAL;
 
 //    printf("Read at %zd\n", iter->offset);
-    return _ring_read_at(iter->ring, iter->offset, data, size);
+    int r = _ring_read_at(iter->ring, iter->offset, data, size);
+    if (r) return r;
+    if (ring_iter_invalid(iter)) return EINVAL; // Check, that data and size are valid
+    return 0;
 }
 
 #if 0
