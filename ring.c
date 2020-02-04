@@ -226,6 +226,7 @@ int ring_iter_invalid(const ringiter_t *iter)
 int ring_iter_shift(ringiter_t *iter)
 {
     if (ring_iter_invalid(iter)) return EINVAL;
+    if (iter->offset == iter->ring->header->tail) return EAGAIN;
     ssize_t off = _ring_shift_offset(iter->ring, iter->offset);
     if (off < 0) return EAGAIN;
 //    printf("Offset to %zd\n", off);
